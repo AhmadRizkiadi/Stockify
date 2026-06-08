@@ -1,0 +1,59 @@
+/* Hallmark · macrostructure: application workbench · tone: precise modern · anchor hue: emerald
+ * pre-emit critique: P4 H5 E5 S5 R4 V5
+ */
+:root {
+  --color-paper: oklch(97.5% 0.006 145);
+  --color-paper-2: oklch(94.5% 0.009 145);
+  --color-panel: oklch(99.5% 0.003 145);
+  --color-panel-hover: oklch(97% 0.01 145);
+  --color-sidebar: oklch(20% 0.025 158);
+  --color-sidebar-hover: oklch(25% 0.035 158);
+  --color-sidebar-text: oklch(88% 0.015 145);
+  --color-ink: oklch(23% 0.025 155);
+  --color-muted: oklch(49% 0.025 155);
+  --color-soft: oklch(68% 0.02 155);
+  --color-rule: oklch(88% 0.014 145);
+  --color-accent: oklch(57% 0.16 155);
+  --color-accent-dark: oklch(45% 0.13 155);
+  --color-accent-soft: oklch(93% 0.04 155);
+  --color-danger: oklch(56% 0.17 28);
+  --color-danger-soft: oklch(95% 0.035 28);
+  --color-warning: oklch(68% 0.15 75);
+  --color-warning-soft: oklch(95% 0.045 75);
+  --color-focus: oklch(54% 0.15 155);
+  --color-in: oklch(52% 0.15 155);
+  --color-out: oklch(56% 0.17 28);
+  --color-shadow: oklch(22% 0.025 155 / 0.08);
+  --color-shadow-soft: oklch(22% 0.025 155 / 0.04);
+
+  --font-display: "Segoe UI Variable Display", "Segoe UI", Arial, sans-serif;
+  --font-body: "Segoe UI Variable Text", "Segoe UI", Arial, sans-serif;
+  --font-outlier: "Cascadia Mono", Consolas, monospace;
+
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-md: 16px;
+  --text-lg: 20px;
+  --text-xl: 28px;
+  --text-display-s: clamp(36px, 6vw, 64px);
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  --rule-thin: 1px;
+  --dur-fast: 120ms;
+  --dur-mid: 180ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}

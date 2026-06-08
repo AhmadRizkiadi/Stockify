@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import redisClient, { isRedisReady } from "../config/redis.js";
 
 const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
@@ -103,6 +104,35 @@ export const loginUser = async (req, res) => {
     });
   }
 };
+
+export const logoutUser = async (req, res) => {
+  try{
+    const token = req.headers.authorization?.split(" ")[1];
+
+    if(!token){
+      return res.status(400).json({
+        success: false,
+        message: "Token not found",
+      });
+    }
+
+    if (isRedisReady()) {
+      await redisClient.setEx(`blacklist:${token}`, 7 * 24 * 60 * 60, "true");
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Logout success",
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+}
+
 
 export const getProfile = async (req, res) => {
   res.status(200).json({

@@ -1,0 +1,9 @@
+[
+  {
+    "date": "2026-06-08",
+    "macrostructure": "workbench",
+    "theme": "operational green",
+    "enrichment": "inventory ledger grid",
+    "brief": "Create Stockify inventory management frontend"
+  }
+]
