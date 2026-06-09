@@ -2,6 +2,65 @@ import bcrypt from "bcryptjs";
 
 import User from "../models/User.js";
 
+export const createUser = async (req, res) => {
+  try {
+    const { name, email, password, role = "staff" } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Name, email, and password are required",
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters",
+      });
+    }
+
+    if (!["admin", "staff"].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: "Role must be admin or staff",
+      });
+    }
+
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "Email already registered",
+      });
+    }
+
+    const user = await User.create({
+      name,
+      email: email.toLowerCase(),
+      password: await bcrypt.hash(password, 10),
+      role,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "User created successfully",
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    res.status(error.code === 11000 ? 400 : 500).json({
+      success: false,
+      message: error.code === 11000 ? "Email already registered" : error.message,
+    });
+  }
+};
+
 export const getUsers = async (req, res) => {
   try {
     const users = await User.find().select("-password").sort({ createdAt: -1 });

@@ -1,6 +1,7 @@
 import express from "express";
 
 import {
+  createUser,
   deleteUser,
   getUsers,
   updateUser,
@@ -9,7 +10,10 @@ import { adminOnly, protect } from "../middleware/authMiddleware.js";
 
 const userRoutes = express.Router();
 
-userRoutes.get("/", protect, adminOnly, getUsers);
+userRoutes
+  .route("/")
+  .get(protect, adminOnly, getUsers)
+  .post(protect, adminOnly, createUser);
 userRoutes
   .route("/:id")
   .put(protect, adminOnly, updateUser)

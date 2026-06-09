@@ -111,24 +111,6 @@ const openApiSpec = {
         },
       },
     },
-    "/api/auth/register": {
-      post: {
-        tags: ["Authentication"],
-        summary: "Register a new user",
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: { $ref: "#/components/schemas/RegisterRequest" },
-            },
-          },
-        },
-        responses: {
-          201: jsonResponse({ $ref: "#/components/schemas/AuthResponse" }),
-          400: errorResponse("Name, email, and password are required"),
-        },
-      },
-    },
     "/api/auth/login": {
       post: {
         tags: ["Authentication"],
@@ -504,6 +486,31 @@ const openApiSpec = {
           ...adminErrorResponses,
         },
       },
+      post: {
+        tags: ["Users"],
+        summary: "Create user as admin",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/CreateUserRequest" },
+            },
+          },
+        },
+        responses: {
+          201: jsonResponse({
+            type: "object",
+            properties: {
+              success: { type: "boolean", example: true },
+              message: { type: "string" },
+              data: { $ref: "#/components/schemas/User" },
+            },
+          }),
+          400: errorResponse("Name, email, and password are required"),
+          ...adminErrorResponses,
+        },
+      },
     },
     "/api/users/{id}": {
       put: {
@@ -581,7 +588,7 @@ const openApiSpec = {
           },
         },
       },
-      RegisterRequest: {
+      CreateUserRequest: {
         type: "object",
         required: ["name", "email", "password"],
         properties: {

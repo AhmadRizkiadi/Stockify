@@ -43,15 +43,7 @@ function AppRoutes() {
         path="/login"
         element={
           <GuestRoute>
-            <AuthPage mode="login" />
-          </GuestRoute>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <GuestRoute>
-            <AuthPage mode="register" />
+            <AuthPage />
           </GuestRoute>
         }
       />
@@ -88,8 +80,9 @@ function AppRoutes() {
       />
       <Route
         path="/auth/register"
-        element={<Navigate to="/register" replace />}
+        element={<Navigate to="/login" replace />}
       />
+      <Route path="/register" element={<Navigate to="/login" replace />} />
       <Route
         path="/inventory/*"
         element={<Navigate to="/dashboard" replace />}
