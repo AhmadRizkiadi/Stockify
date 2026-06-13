@@ -1,14 +1,92 @@
+import { useMemo, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Icon } from "../components/ui/Icon";
+import {
+  AppstoreOutlined,
+  ArrowDownOutlined,
+  ArrowUpOutlined,
+  HistoryOutlined,
+  LogoutOutlined,
+  MenuFoldOutlined,
+  ProductOutlined,
+  TagsOutlined,
+  TeamOutlined,
+} from "@ant-design/icons";
+import {
+  Avatar,
+  Button,
+  Drawer,
+  Dropdown,
+  Grid,
+  Layout,
+  Menu,
+  Space,
+  Typography,
+} from "antd";
 import { navItems } from "../config/navigation";
 import { useAuth } from "../hooks/useAuth";
+
+const { Header, Sider, Content } = Layout;
+const { Text, Title } = Typography;
+const { useBreakpoint } = Grid;
+
+const navIcons = {
+  dashboard: <AppstoreOutlined />,
+  package: <ProductOutlined />,
+  tag: <TagsOutlined />,
+  arrowDown: <ArrowDownOutlined />,
+  arrowUp: <ArrowUpOutlined />,
+  history: <HistoryOutlined />,
+  users: <TeamOutlined />,
+};
+
+function resolveActiveKey(pathname) {
+  if (pathname.startsWith("/products")) return "/products";
+  if (pathname.startsWith("/categories")) return "/categories";
+  if (pathname.startsWith("/transactions")) return "/transactions";
+  return pathname;
+}
+
+function NavigationMenu({ items, activeKey, onSelect }) {
+  return (
+    <Menu
+      className="stockify-menu"
+      mode="inline"
+      theme="dark"
+      selectedKeys={[activeKey]}
+      onClick={onSelect}
+      items={items.map((item) => ({
+        key: item.path,
+        icon: navIcons[item.icon],
+        label: <Link to={item.path}>{item.label}</Link>,
+      }))}
+    />
+  );
+}
 
 export function InventoryLayout() {
   const { api, session, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const screens = useBreakpoint();
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const visibleNav = navItems.filter(
     (item) => !item.adminOnly || session?.role === "admin"
+  );
+  const activeKey = resolveActiveKey(location.pathname);
+  const pageTitle =
+    visibleNav.find((item) => item.path === activeKey)?.label || "Inventory";
+  const isMobile = !screens.lg;
+
+  const dropdownItems = useMemo(
+    () => [
+      {
+        key: "logout",
+        danger: true,
+        icon: <LogoutOutlined />,
+        label: "Logout",
+      },
+    ],
+    []
   );
 
   const handleLogout = async () => {
@@ -22,65 +100,86 @@ export function InventoryLayout() {
     navigate("/login", { replace: true });
   };
 
-  const pageTitle =
-    visibleNav.find((item) =>
-      item.path === "/products"
-        ? location.pathname.startsWith("/products")
-        : item.path === location.pathname
-    )?.label ||
-    "Inventory";
+  const handleMenuSelect = () => {
+    if (isMobile) setDrawerOpen(false);
+  };
+
+  const sidebar = (
+    <div className="shell-sidebar">
+      <Link className="brand-plate" to="/dashboard" onClick={handleMenuSelect}>
+        <span className="brand-sigil">S</span>
+        <span>
+          <strong>Stockify</strong>
+          <small>Warehouse console</small>
+        </span>
+      </Link>
+
+      <NavigationMenu
+        items={visibleNav}
+        activeKey={activeKey}
+        onSelect={handleMenuSelect}
+      />
+    </div>
+  );
 
   return (
-    <div className="app-shell">
-      <aside className="side-rail">
-        <Link className="side-brand" to="/dashboard">
-          <span className="brand-mark">S</span>
-          <span>Stockify</span>
-        </Link>
+    <Layout className="app-shell">
+      {!isMobile && (
+        <Sider width={276} className="app-sider">
+          {sidebar}
+        </Sider>
+      )}
 
-        <nav className="nav-list" aria-label="Main navigation">
-          {visibleNav.map((item) => (
-            <Link
-              key={item.path}
-              className={
-                item.path === "/products"
-                  ? location.pathname.startsWith("/products")
-                    ? "is-active"
-                    : ""
-                  : location.pathname === item.path
-                    ? "is-active"
-                    : ""
-              }
-              to={item.path}
-            >
-              <Icon name={item.icon} />
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-      </aside>
+      <Drawer
+        width={292}
+        placement="left"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        className="mobile-nav-drawer"
+        closable={false}
+      >
+        {sidebar}
+      </Drawer>
 
-      <main className="workbench">
-        <header className="topbar">
-          <div>
-            <p className="overline">Signed in as {session.role}</p>
-            <h1>{pageTitle}</h1>
-          </div>
-          <div className="profile-pill">
-            <span>{session.name?.slice(0, 1) || "U"}</span>
+      <Layout className="app-main">
+        <Header className="app-header">
+          <Space size={12} align="center">
+            {isMobile && (
+              <Button
+                icon={<MenuFoldOutlined />}
+                onClick={() => setDrawerOpen(true)}
+                aria-label="Open navigation"
+              />
+            )}
             <div>
-              <strong>{session.name}</strong>
-              <small>{session.email}</small>
+              <Text className="eyebrow">Signed in as {session.role}</Text>
+              <Title level={2}>{pageTitle}</Title>
             </div>
-            <button type="button" onClick={handleLogout}>
-              <Icon name="logout" size={16} />
-              <span>Logout</span>
-            </button>
-          </div>
-        </header>
+          </Space>
 
-        <Outlet />
-      </main>
-    </div>
+          <Dropdown
+            menu={{
+              items: dropdownItems,
+              onClick: ({ key }) => {
+                if (key === "logout") handleLogout();
+              },
+            }}
+            trigger={["click"]}
+          >
+            <Button className="profile-button">
+              <Avatar size={30}>{session.name?.slice(0, 1) || "U"}</Avatar>
+              <span className="profile-copy">
+                <strong>{session.name}</strong>
+                <small>{session.email}</small>
+              </span>
+            </Button>
+          </Dropdown>
+        </Header>
+
+        <Content className="workbench">
+          <Outlet />
+        </Content>
+      </Layout>
+    </Layout>
   );
 }

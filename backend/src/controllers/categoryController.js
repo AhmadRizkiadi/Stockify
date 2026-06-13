@@ -1,13 +1,22 @@
 import Category from "../models/Category.js";
 import Product from "../models/Product.js";
+import {
+  createPaginationMeta,
+  getPagination,
+} from "../utils/pagination.js";
 
 export const getCategories = async (req, res) => {
   try {
-    const categories = await Category.find().sort({ name: 1 });
+    const { page, limit, skip } = getPagination(req.query);
+    const [categories, total] = await Promise.all([
+      Category.find().sort({ name: 1 }).skip(skip).limit(limit),
+      Category.countDocuments(),
+    ]);
 
     res.status(200).json({
       success: true,
       data: categories,
+      pagination: createPaginationMeta({ page, limit, total }),
     });
   } catch (error) {
     res.status(500).json({

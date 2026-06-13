@@ -2,6 +2,10 @@ import Product from "../models/Product.js";
 import StockTransaction from "../models/StockTransaction.js";
 import User from "../models/User.js";
 import redisClient, { isRedisReady } from "../config/redis.js";
+import {
+  createPaginationMeta,
+  getPagination,
+} from "../utils/pagination.js";
 
 const clearStockCache = async (productId) => {
   if (!isRedisReady()) return;
@@ -129,6 +133,7 @@ export const getTransactions = async (req, res) => {
       type,
     } = req.query;
     const query = {};
+    const { page, limit, skip } = getPagination(req.query);
 
     if (type && type !== "all") query.type = type.toUpperCase();
     if (product) query.product = product;
@@ -167,14 +172,20 @@ export const getTransactions = async (req, res) => {
       ];
     }
 
-    const transactions = await StockTransaction.find(query)
-      .populate("product", "name sku category unit")
-      .populate("createdBy", "name email role")
-      .sort(transactionSorts[sort] || transactionSorts.newest);
+    const [transactions, total] = await Promise.all([
+      StockTransaction.find(query)
+        .populate("product", "name sku category unit")
+        .populate("createdBy", "name email role")
+        .sort(transactionSorts[sort] || transactionSorts.newest)
+        .skip(skip)
+        .limit(limit),
+      StockTransaction.countDocuments(query),
+    ]);
 
     res.status(200).json({
       success: true,
       data: transactions,
+      pagination: createPaginationMeta({ page, limit, total }),
     });
   } catch (error) {
     res.status(500).json({

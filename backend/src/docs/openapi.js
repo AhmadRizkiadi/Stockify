@@ -165,6 +165,8 @@ const openApiSpec = {
         summary: "List products",
         security: [{ bearerAuth: [] }],
         parameters: [
+          { $ref: "#/components/parameters/Page" },
+          { $ref: "#/components/parameters/Limit" },
           {
             name: "category",
             in: "query",
@@ -194,6 +196,7 @@ const openApiSpec = {
                 type: "array",
                 items: { $ref: "#/components/schemas/Product" },
               },
+              pagination: { $ref: "#/components/schemas/Pagination" },
             },
           }),
           ...authErrorResponses,
@@ -294,6 +297,10 @@ const openApiSpec = {
         tags: ["Categories"],
         summary: "List categories",
         security: [{ bearerAuth: [] }],
+        parameters: [
+          { $ref: "#/components/parameters/Page" },
+          { $ref: "#/components/parameters/Limit" },
+        ],
         responses: {
           200: jsonResponse({
             type: "object",
@@ -303,6 +310,7 @@ const openApiSpec = {
                 type: "array",
                 items: { $ref: "#/components/schemas/Category" },
               },
+              pagination: { $ref: "#/components/schemas/Pagination" },
             },
           }),
           ...authErrorResponses,
@@ -422,6 +430,8 @@ const openApiSpec = {
         summary: "List stock transactions",
         security: [{ bearerAuth: [] }],
         parameters: [
+          { $ref: "#/components/parameters/Page" },
+          { $ref: "#/components/parameters/Limit" },
           {
             name: "type",
             in: "query",
@@ -443,6 +453,7 @@ const openApiSpec = {
                 type: "array",
                 items: { $ref: "#/components/schemas/StockTransaction" },
               },
+              pagination: { $ref: "#/components/schemas/Pagination" },
             },
           }),
           ...authErrorResponses,
@@ -472,6 +483,10 @@ const openApiSpec = {
         tags: ["Users"],
         summary: "List users",
         security: [{ bearerAuth: [] }],
+        parameters: [
+          { $ref: "#/components/parameters/Page" },
+          { $ref: "#/components/parameters/Limit" },
+        ],
         responses: {
           200: jsonResponse({
             type: "object",
@@ -481,6 +496,7 @@ const openApiSpec = {
                 type: "array",
                 items: { $ref: "#/components/schemas/User" },
               },
+              pagination: { $ref: "#/components/schemas/Pagination" },
             },
           }),
           ...adminErrorResponses,
@@ -569,6 +585,18 @@ const openApiSpec = {
         required: true,
         schema: { type: "string", example: "665f1c8d9a9b4e0012a34567" },
       },
+      Page: {
+        name: "page",
+        in: "query",
+        description: "Page number, starting from 1",
+        schema: { type: "integer", minimum: 1, default: 1 },
+      },
+      Limit: {
+        name: "limit",
+        in: "query",
+        description: "Rows per page, maximum 100",
+        schema: { type: "integer", minimum: 1, maximum: 100, default: 10 },
+      },
     },
     schemas: {
       MessageResponse: {
@@ -586,6 +614,17 @@ const openApiSpec = {
             type: "string",
             example: "Request could not be processed",
           },
+        },
+      },
+      Pagination: {
+        type: "object",
+        properties: {
+          page: { type: "integer", example: 1 },
+          limit: { type: "integer", example: 10 },
+          total: { type: "integer", example: 48 },
+          totalPages: { type: "integer", example: 5 },
+          hasNextPage: { type: "boolean", example: true },
+          hasPrevPage: { type: "boolean", example: false },
         },
       },
       CreateUserRequest: {

@@ -1,24 +1,23 @@
 import { useState } from "react";
+import { LockOutlined, MailOutlined } from "@ant-design/icons";
+import { Alert, Button, Form, Input, Typography } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+
+const { Text, Title } = Typography;
 
 export function AuthPage() {
   const { api, saveSession } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const submit = async (event) => {
-    event.preventDefault();
+  const submit = async (values) => {
     setError("");
     setLoading(true);
 
     try {
-      const { data } = await api.post("/auth/login", form);
+      const { data } = await api.post("/auth/login", values);
       saveSession(data.data);
       navigate("/dashboard", { replace: true });
     } catch (err) {
@@ -31,57 +30,85 @@ export function AuthPage() {
   return (
     <main className="auth-canvas">
       <section className="auth-panel" aria-label="Authentication">
-        <div className="brand-lockup">
-          <span className="brand-mark">S</span>
-          <div>
-            <strong>Stockify</strong>
-            <span>Inventory control surface</span>
+        <div className="auth-intel">
+          <div className="brand-plate auth-brand">
+            <span className="brand-sigil">S</span>
+            <span>
+              <strong>Stockify</strong>
+              <small>Inventory command surface</small>
+            </span>
           </div>
-        </div>
 
-        <div className="auth-grid">
-          <div className="auth-copy">
-            <p className="overline">Operator console</p>
-            <h1>Sign in to stockroom</h1>
+          <div className="auth-statement">
+            <Text className="eyebrow">Restricted access</Text>
+            <Title level={1}>Sign in to the stockroom</Title>
             <p>
-              Track products, stock movements, categories, and low-stock signals
-              from one workspace.
+              Operators get product counts, stock movement controls, and
+              exception lists without a public sign-up door.
             </p>
           </div>
 
-          <form className="form-stack" onSubmit={submit}>
-            <label>
-              <span>Email</span>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(event) =>
-                  setForm({ ...form, email: event.target.value })
-                }
+          <div className="auth-ledger" aria-hidden="true">
+            <span>SKU</span>
+            <span>ON HAND</span>
+            <span>REORDER</span>
+            <strong>EL-PRN-014</strong>
+            <strong>4</strong>
+            <strong>6</strong>
+          </div>
+        </div>
+
+        <div className="auth-form-surface">
+          <Text className="eyebrow">Operator login</Text>
+          <Title level={2}>Welcome back</Title>
+
+          {error && (
+            <Alert
+              className="form-alert"
+              type="error"
+              message={error}
+              showIcon
+            />
+          )}
+
+          <Form layout="vertical" size="large" onFinish={submit}>
+            <Form.Item
+              label="Email"
+              name="email"
+              rules={[
+                { required: true, message: "Email is required" },
+                { type: "email", message: "Use a valid email address" },
+              ]}
+            >
+              <Input
+                prefix={<MailOutlined />}
                 placeholder="admin@stockify.local"
-                required
+                autoComplete="email"
               />
-            </label>
+            </Form.Item>
 
-            <label>
-              <span>Password</span>
-              <input
-                type="password"
-                value={form.password}
-                onChange={(event) =>
-                  setForm({ ...form, password: event.target.value })
-                }
+            <Form.Item
+              label="Password"
+              name="password"
+              rules={[{ required: true, message: "Password is required" }]}
+            >
+              <Input.Password
+                prefix={<LockOutlined />}
                 placeholder="stockify123"
-                required
+                autoComplete="current-password"
               />
-            </label>
+            </Form.Item>
 
-            {error && <p className="form-error">{error}</p>}
-
-            <button className="primary-action" type="submit" disabled={loading}>
-              {loading ? "Working..." : "Login"}
-            </button>
-          </form>
+            <Button
+              block
+              type="primary"
+              htmlType="submit"
+              loading={loading}
+              className="submit-button"
+            >
+              Login
+            </Button>
+          </Form>
         </div>
       </section>
     </main>

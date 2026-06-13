@@ -1,5 +1,5 @@
-/* Hallmark · macrostructure: application workbench · tone: precise modern · anchor hue: emerald
- * pre-emit critique: P4 H5 E5 S5 R4 V5
+/* Hallmark · macrostructure: application workbench · tone: industrial-utilitarian · anchor hue: oxidized green
+ * pre-emit critique: P4 H5 E5 S5 R5 V4
  */
 :root {
   --color-paper: oklch(97.5% 0.006 145);
@@ -26,8 +26,8 @@
   --color-shadow: oklch(22% 0.025 155 / 0.08);
   --color-shadow-soft: oklch(22% 0.025 155 / 0.04);
 
-  --font-display: "Segoe UI Variable Display", "Segoe UI", Arial, sans-serif;
-  --font-body: "Segoe UI Variable Text", "Segoe UI", Arial, sans-serif;
+  --font-display: "Aptos Display", "Segoe UI Variable Display", "Segoe UI", sans-serif;
+  --font-body: "Aptos", "Segoe UI Variable Text", "Segoe UI", sans-serif;
   --font-outlier: "Cascadia Mono", Consolas, monospace;
 
   --space-2xs: 4px;

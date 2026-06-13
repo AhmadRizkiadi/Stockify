@@ -1,9 +1,13 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { ArrowLeftOutlined } from "@ant-design/icons";
+import { Alert, Button, Card, Skeleton, Space, Typography } from "antd";
 import { ProductForm } from "../../components/products/ProductForm";
 import { Notice } from "../../components/ui/Notice";
 import { useApiResource } from "../../hooks/useApiResource";
 import { useAuth } from "../../hooks/useAuth";
+
+const { Text, Title } = Typography;
 
 const emptyProduct = {
   name: "",
@@ -22,30 +26,32 @@ export function ProductFormPage() {
   const { api } = useAuth();
   const isEdit = Boolean(id);
   const [message, setMessage] = useState("");
-  const { data: categories } = useApiResource(api, "/categories", []);
+  const { data: categories } = useApiResource(api, "/categories?limit=100", []);
   const {
     data: product,
     error,
     loading,
   } = useApiResource(api, isEdit ? `/products/${id}` : null, null);
-
   const title = isEdit ? "Edit product" : "Create product";
-
   const canSubmit = useMemo(() => !isEdit || product, [isEdit, product]);
 
   return (
     <section className="form-page">
-      <div className="form-panel">
-        <div className="form-heading">
-          <div>
-            <p className="overline">Products</p>
-            <h2>{title}</h2>
-          </div>
-          <Link className="toolbar-action is-secondary" to="/products">
-            Back
+      <Card
+        title={
+          <Space direction="vertical" size={0}>
+            <Text className="eyebrow">Products</Text>
+            <Title level={3}>{title}</Title>
+          </Space>
+        }
+        extra={
+          <Link to="/products">
+            <Button icon={<ArrowLeftOutlined />}>Back</Button>
           </Link>
-        </div>
-        <Notice error={error} loading={isEdit && loading} />
+        }
+      >
+        <Notice error={error} loading={false} />
+        {isEdit && loading && <Skeleton active paragraph={{ rows: 7 }} />}
         {canSubmit && (
           <ProductEditor
             key={id || "create"}
@@ -58,8 +64,10 @@ export function ProductFormPage() {
             setMessage={setMessage}
           />
         )}
-        {message && <p className="notice is-error">{message}</p>}
-      </div>
+        {message && (
+          <Alert className="form-alert" type="error" message={message} showIcon />
+        )}
+      </Card>
     </section>
   );
 }
@@ -90,14 +98,17 @@ function ProductEditor({
 }) {
   const [form, setForm] = useState(() => toProductForm(product));
   const [file, setFile] = useState(null);
+  const [saving, setSaving] = useState(false);
 
-  const submit = async (event) => {
-    event.preventDefault();
+  const submit = async (values) => {
     setMessage("");
+    setSaving(true);
 
     try {
       const payload = new FormData();
-      Object.entries(form).forEach(([key, value]) => payload.append(key, value));
+      Object.entries(values).forEach(([key, value]) =>
+        payload.append(key, value ?? "")
+      );
       if (file) payload.append("image", file);
 
       if (isEdit) {
@@ -112,6 +123,8 @@ function ProductEditor({
       });
     } catch (err) {
       setMessage(err.response?.data?.message || "Unable to save product");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -123,6 +136,7 @@ function ProductEditor({
       onSubmit={submit}
       onFile={setFile}
       submitLabel={isEdit ? "Update product" : "Create product"}
+      loading={saving}
     />
   );
 }

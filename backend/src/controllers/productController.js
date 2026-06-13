@@ -4,6 +4,10 @@ import {
   deleteFromCloudinary,
   uploadToCloudinary,
 } from "../utils/cloudinaryUpload.js";
+import {
+  createPaginationMeta,
+  getPagination,
+} from "../utils/pagination.js";
 
 const PRODUCT_CACHE_KEY = "products:all";
 const DASHBOARD_CACHE_KEY = "dashboard:summary";
@@ -50,6 +54,7 @@ export const getProducts = async (req, res) => {
     } = req.query;
     const query = {};
     const andFilters = [];
+    const { page, limit, skip } = getPagination(req.query);
 
     if (category && category !== "all") query.category = category;
     if (lowStock === "true" || stockStatus === "low") {
@@ -91,32 +96,19 @@ export const getProducts = async (req, res) => {
     }
     if (andFilters.length) query.$and = andFilters;
 
-    const shouldUseCache = Object.keys(req.query).length === 0;
-    const cachedProducts =
-      shouldUseCache && isRedisReady()
-        ? await redisClient.get(PRODUCT_CACHE_KEY)
-        : null;
-
-    if (cachedProducts) {
-      return res.status(200).json({
-        success: true,
-        source: "redis-cache",
-        data: JSON.parse(cachedProducts),
-      });
-    }
-
-    const products = await Product.find(query).sort(
-      productSorts[sort] || productSorts.newest
-    );
-
-    if (shouldUseCache && isRedisReady()) {
-      await redisClient.setEx(PRODUCT_CACHE_KEY, 60 * 5, JSON.stringify(products));
-    }
+    const [products, total] = await Promise.all([
+      Product.find(query)
+        .sort(productSorts[sort] || productSorts.newest)
+        .skip(skip)
+        .limit(limit),
+      Product.countDocuments(query),
+    ]);
 
     res.status(200).json({
       success: true,
       source: "database",
       data: products,
+      pagination: createPaginationMeta({ page, limit, total }),
     });
   } catch (error) {
     res.status(500).json({

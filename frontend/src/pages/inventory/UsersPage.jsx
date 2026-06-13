@@ -1,161 +1,244 @@
 import { useState } from "react";
-import { EmptyRow } from "../../components/ui/EmptyRow";
+import { DeleteOutlined, ReloadOutlined, UserAddOutlined } from "@ant-design/icons";
+import {
+  App,
+  Button,
+  Card,
+  Drawer,
+  Empty,
+  Form,
+  Input,
+  Popconfirm,
+  Select,
+  Space,
+  Table,
+  Tag,
+  Typography,
+} from "antd";
 import { Notice } from "../../components/ui/Notice";
-import { TableHeader } from "../../components/ui/TableHeader";
 import { useApiResource } from "../../hooks/useApiResource";
 import { useAuth } from "../../hooks/useAuth";
 import { formatDate } from "../../utils/format";
 
+const { Text, Title } = Typography;
+
 export function UsersPage() {
   const { api, session } = useAuth();
-  const { data, error, loading, reload } = useApiResource(api, "/users", []);
-  const [message, setMessage] = useState("");
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-    role: "staff",
-  });
+  const { message } = App.useApp();
+  const [form] = Form.useForm();
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const { data, error, loading, pagination, reload } = useApiResource(
+    api,
+    `/users?page=${page}&limit=${limit}`,
+    []
+  );
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  const create = async (event) => {
-    event.preventDefault();
-    setMessage("");
-
+  const create = async (values) => {
     try {
-      await api.post("/users", form);
-      setForm({ name: "", email: "", password: "", role: "staff" });
-      setMessage("User created");
+      await api.post("/users", values);
+      closeDrawer();
+      message.success("User created");
       reload();
     } catch (err) {
-      setMessage(err.response?.data?.message || "Unable to create user");
+      message.error(err.response?.data?.message || "Unable to create user");
     }
   };
 
-  const updateRole = async (user, role) => {
-    setMessage("");
+  const closeDrawer = () => {
+    setIsDrawerOpen(false);
+    form.resetFields();
+  };
 
+  const updateRole = async (user, role) => {
     try {
       await api.put(`/users/${user._id}`, { role });
-      setMessage("User role updated");
+      message.success("User role updated");
       reload();
     } catch (err) {
-      setMessage(err.response?.data?.message || "Unable to update user");
+      message.error(err.response?.data?.message || "Unable to update user");
     }
   };
 
   const remove = async (user) => {
-    if (!confirm(`Delete ${user.name}?`)) return;
-
     try {
       await api.delete(`/users/${user._id}`);
-      setMessage("User deleted");
-      reload();
+      message.success("User deleted");
+      if (data.length === 1 && page > 1) {
+        setPage((current) => current - 1);
+      } else {
+        reload();
+      }
     } catch (err) {
-      setMessage(err.response?.data?.message || "Unable to delete user");
+      message.error(err.response?.data?.message || "Unable to delete user");
     }
   };
 
-  return (
-    <section className="split-workspace">
-      <div className="table-surface">
-        <TableHeader title="User access" actionLabel="Reload" onAction={reload} />
-        <Notice error={error} loading={loading} />
-        {message && <p className="notice">{message}</p>}
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Joined</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((user) => (
-              <tr key={user._id}>
-                <td>{user.name}</td>
-                <td>{user.email}</td>
-                <td>
-                  <select
-                    value={user.role}
-                    onChange={(event) => updateRole(user, event.target.value)}
-                    disabled={session.id === user._id}
-                  >
-                    <option value="staff">Staff</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </td>
-                <td>{formatDate(user.createdAt)}</td>
-                <td>
-                  <button
-                    type="button"
-                    onClick={() => remove(user)}
-                    disabled={session.id === user._id}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {!data.length && <EmptyRow columns={5} label="No users found" />}
-          </tbody>
-        </table>
-      </div>
+  const columns = [
+    {
+      title: "Name",
+      dataIndex: "name",
+      render: (value, user) => (
+        <Space direction="vertical" size={0}>
+          <Text strong>{value}</Text>
+          <Text type="secondary">{user.email}</Text>
+        </Space>
+      ),
+    },
+    {
+      title: "Role",
+      dataIndex: "role",
+      width: 160,
+      render: (role, user) => (
+        <Select
+          value={role}
+          disabled={session.id === user._id}
+          onChange={(value) => updateRole(user, value)}
+          options={[
+            { label: "Staff", value: "staff" },
+            { label: "Admin", value: "admin" },
+          ]}
+        />
+      ),
+    },
+    {
+      title: "Status",
+      width: 120,
+      render: (_, user) =>
+        session.id === user._id ? <Tag color="blue">Current user</Tag> : <Tag>Active</Tag>,
+    },
+    {
+      title: "Joined",
+      dataIndex: "createdAt",
+      width: 180,
+      render: formatDate,
+    },
+    {
+      title: "Action",
+      width: 100,
+      render: (_, user) => (
+        <Popconfirm
+          title={`Delete ${user.name}?`}
+          description="This account will no longer be able to sign in."
+          okButtonProps={{ danger: true }}
+          disabled={session.id === user._id}
+          onConfirm={() => remove(user)}
+        >
+          <Button danger icon={<DeleteOutlined />} disabled={session.id === user._id} />
+        </Popconfirm>
+      ),
+    },
+  ];
 
-      <aside className="form-panel">
-        <h2>Create user</h2>
-        <form className="form-stack" onSubmit={create}>
-          <label>
-            <span>Name</span>
-            <input
-              value={form.name}
-              onChange={(event) =>
-                setForm({ ...form, name: event.target.value })
-              }
-              required
-            />
-          </label>
-          <label>
-            <span>Email</span>
-            <input
-              type="email"
-              value={form.email}
-              onChange={(event) =>
-                setForm({ ...form, email: event.target.value })
-              }
-              required
-            />
-          </label>
-          <label>
-            <span>Temporary password</span>
-            <input
-              type="password"
-              minLength="6"
-              value={form.password}
-              onChange={(event) =>
-                setForm({ ...form, password: event.target.value })
-              }
-              required
-            />
-          </label>
-          <label>
-            <span>Role</span>
-            <select
-              value={form.role}
-              onChange={(event) =>
-                setForm({ ...form, role: event.target.value })
-              }
+  return (
+    <section className="page-stack">
+      <Card
+        className="data-card"
+        title="User access"
+        extra={
+          <Space>
+            <Button icon={<ReloadOutlined />} onClick={reload}>
+              Reload
+            </Button>
+            <Button
+              type="primary"
+              icon={<UserAddOutlined />}
+              onClick={() => setIsDrawerOpen(true)}
             >
-              <option value="staff">Staff</option>
-              <option value="admin">Admin</option>
-            </select>
-          </label>
-          <button className="primary-action" type="submit">
-            Create user
-          </button>
-        </form>
-      </aside>
+              Add user
+            </Button>
+          </Space>
+        }
+      >
+        <Notice error={error} loading={false} />
+        <Table
+          rowKey="_id"
+          columns={columns}
+          dataSource={data}
+          loading={loading}
+          pagination={{
+            current: pagination?.page || page,
+            pageSize: pagination?.limit || limit,
+            total: pagination?.total || 0,
+            showSizeChanger: true,
+            pageSizeOptions: [10, 20, 50],
+            onChange: (nextPage, nextLimit) => {
+              setPage(nextPage);
+              setLimit(nextLimit);
+            },
+          }}
+          locale={{
+            emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No users found" />,
+          }}
+          scroll={{ x: 780 }}
+        />
+      </Card>
+
+      <Drawer
+        title="Create user"
+        placement="right"
+        width={400}
+        onClose={closeDrawer}
+        open={isDrawerOpen}
+        destroyOnClose
+      >
+        <Space direction="vertical" size={2} style={{ marginBottom: 16 }}>
+          <Text className="eyebrow">Admin control</Text>
+          <Title level={4}>Create user</Title>
+        </Space>
+        <Form
+          form={form}
+          layout="vertical"
+          initialValues={{ role: "staff" }}
+          onFinish={create}
+          className="inventory-form"
+        >
+          <Form.Item
+            label="Name"
+            name="name"
+            rules={[{ required: true, message: "Name is required" }]}
+          >
+            <Input placeholder="Staff Gudang" />
+          </Form.Item>
+          <Form.Item
+            label="Email"
+            name="email"
+            rules={[
+              { required: true, message: "Email is required" },
+              { type: "email", message: "Use a valid email address" },
+            ]}
+          >
+            <Input placeholder="staff@stockify.local" />
+          </Form.Item>
+          <Form.Item
+            label="Temporary password"
+            name="password"
+            rules={[
+              { required: true, message: "Password is required" },
+              { min: 6, message: "Use at least 6 characters" },
+            ]}
+          >
+            <Input.Password placeholder="secret123" />
+          </Form.Item>
+          <Form.Item label="Role" name="role">
+            <Select
+              options={[
+                { label: "Staff", value: "staff" },
+                { label: "Admin", value: "admin" },
+              ]}
+            />
+          </Form.Item>
+          <Space className="form-actions" style={{ width: "100%", justifyContent: "flex-end", marginTop: 24 }}>
+            <Button onClick={closeDrawer} style={{ marginRight: 8 }}>
+              Cancel
+            </Button>
+            <Button type="primary" icon={<UserAddOutlined />} htmlType="submit">
+              Create user
+            </Button>
+          </Space>
+        </Form>
+      </Drawer>
     </section>
   );
 }

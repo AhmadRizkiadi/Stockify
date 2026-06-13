@@ -1,6 +1,10 @@
 import bcrypt from "bcryptjs";
 
 import User from "../models/User.js";
+import {
+  createPaginationMeta,
+  getPagination,
+} from "../utils/pagination.js";
 
 export const createUser = async (req, res) => {
   try {
@@ -63,11 +67,20 @@ export const createUser = async (req, res) => {
 
 export const getUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password").sort({ createdAt: -1 });
+    const { page, limit, skip } = getPagination(req.query);
+    const [users, total] = await Promise.all([
+      User.find()
+        .select("-password")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      User.countDocuments(),
+    ]);
 
     res.status(200).json({
       success: true,
       data: users,
+      pagination: createPaginationMeta({ page, limit, total }),
     });
   } catch (error) {
     res.status(500).json({

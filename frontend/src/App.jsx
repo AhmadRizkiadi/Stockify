@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { ConfigProvider, App as AntApp, theme } from "antd";
 import "./App.css";
 import { AuthProvider } from "./context/AuthContext";
 import { useAuth } from "./hooks/useAuth";
@@ -102,9 +103,61 @@ function AppRoutes() {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
+    <ConfigProvider
+      theme={{
+        algorithm: theme.defaultAlgorithm,
+        token: {
+          colorPrimary: "#0f766e",
+          colorInfo: "#2563eb",
+          colorSuccess: "#0f766e",
+          colorWarning: "#b45309",
+          colorError: "#b42318",
+          colorTextBase: "#17211d",
+          colorBgBase: "#f6f8f4",
+          colorBorder: "#d9e1d8",
+          borderRadius: 6,
+          fontFamily:
+            '"Aptos", "Segoe UI Variable Text", "Segoe UI", sans-serif',
+          fontSize: 14,
+          controlHeight: 38,
+        },
+        components: {
+          Button: {
+            borderRadius: 6,
+            fontWeight: 650,
+            primaryShadow: "none",
+          },
+          Card: {
+            borderRadiusLG: 8,
+            boxShadowTertiary: "0 1px 0 rgba(23, 33, 29, 0.04)",
+          },
+          Table: {
+            borderColor: "#d9e1d8",
+            headerBg: "#eef3eb",
+            headerColor: "#4b5b54",
+            rowHoverBg: "#f3f7f0",
+          },
+          Layout: {
+            bodyBg: "#f6f8f4",
+            siderBg: "#17211d",
+            triggerBg: "#17211d",
+          },
+          Menu: {
+            darkItemBg: "#17211d",
+            darkItemSelectedBg: "#0f766e",
+            darkItemHoverBg: "#22342e",
+            darkItemColor: "#cbd8d0",
+            darkItemSelectedColor: "#ffffff",
+          },
+        },
+      }}
+    >
+      <AntApp>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </AntApp>
+    </ConfigProvider>
   );
 }
 

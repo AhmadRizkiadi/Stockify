@@ -1,14 +1,13 @@
+import { Alert, Progress } from "antd";
+
 export function Notice({ error, loading }) {
   if (loading) {
-    return (
-      <div className="loading-state" aria-label="Loading data">
-        <span />
-        <span />
-        <span />
-      </div>
-    );
+    return <Progress percent={70} showInfo={false} status="active" />;
   }
 
-  if (error) return <p className="notice is-error">{error}</p>;
+  if (error) {
+    return <Alert className="form-alert" type="error" message={error} showIcon />;
+  }
+
   return null;
 }
